@@ -4,3 +4,8 @@ pydantic
 pydantic-settings
 python-dotenv
 httpx
+
+# RAG (chatbot)
+chromadb
+sentence-transformers
+pypdf
