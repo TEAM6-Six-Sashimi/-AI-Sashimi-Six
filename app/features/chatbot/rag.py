@@ -46,18 +46,9 @@ def get_collection(name: str):
     )
 
 
-def retrieve(rag_source_type: str, query: str, top_k: int = 3) -> list[dict]:
-    """ragSourceType에 해당하는 컬렉션에서 query와 유사한 청크 top_k개를 검색한다.
-
-    반환: [{content, metadata, similarity}, ...] (유사도 임계값 이상만)
-    대상 컬렉션이 없거나(NONE 등) 결과가 없으면 빈 리스트.
-    """
-    collection_name = COLLECTION_BY_SOURCE.get(rag_source_type)
-    if not collection_name or not query.strip():
-        return []
-
-    collection = get_collection(collection_name)
-    results = collection.query(query_texts=[query], n_results=top_k)
+def _query(collection, query: str, top_k: int, where: dict | None = None) -> list[dict]:
+    """컬렉션에서 검색하고 유사도 임계값을 넘는 청크만 돌려준다."""
+    results = collection.query(query_texts=[query], n_results=top_k, where=where)
 
     chunks: list[dict] = []
     for doc, meta, dist in zip(
@@ -69,6 +60,65 @@ def retrieve(rag_source_type: str, query: str, top_k: int = 3) -> list[dict]:
         if similarity >= SIMILARITY_THRESHOLD:
             chunks.append({"content": doc, "metadata": meta or {}, "similarity": similarity})
     return chunks
+
+
+def _certificate_name_filter(rag_keywords: list[str] | None) -> dict | None:
+    """분류가 뽑은 ragKeywords 중 실제 자격증 종목명과 정확히 일치하는 게 있으면 필터를 만든다.
+
+    자격증 청크는 '시행처·관련학과·검정방법' 같은 공통 문구가 길어, 의미 검색만으로는
+    이름이 비슷한 다른 종목(예: 정보처리기사 ↔ 정보관리기술사)이 섞인다.
+    종목명으로 먼저 좁히면 이 문제가 사라진다.
+    """
+    if not rag_keywords:
+        return None
+
+    known_names = _certificate_names()
+    for keyword in rag_keywords:
+        name = keyword.strip()
+        if name in known_names:
+            return {"종목명": name}
+    return None
+
+
+@lru_cache(maxsize=1)
+def _certificate_names() -> frozenset[str]:
+    """색인된 자격증 종목명 집합 (필터 키워드가 실제 종목명인지 확인용)."""
+    collection = get_collection(COLLECTION_BY_SOURCE["CERTIFICATE"])
+    metadatas = collection.get(include=["metadatas"])["metadatas"]
+    return frozenset(
+        m["종목명"] for m in metadatas if m and m.get("종목명")
+    )
+
+
+def retrieve(
+        rag_source_type: str,
+        query: str,
+        top_k: int = 3,
+        rag_keywords: list[str] | None = None,
+) -> list[dict]:
+    """ragSourceType에 해당하는 컬렉션에서 query와 유사한 청크 top_k개를 검색한다.
+
+    자격증(CERTIFICATE)은 ragKeywords에 실제 종목명이 있으면 그 종목으로 먼저 좁혀 검색하고,
+    결과가 없으면 필터 없이 재검색한다(하이브리드).
+
+    반환: [{content, metadata, similarity}, ...] (유사도 임계값 이상만)
+    대상 컬렉션이 없거나(NONE 등) 결과가 없으면 빈 리스트.
+    """
+    collection_name = COLLECTION_BY_SOURCE.get(rag_source_type)
+    if not collection_name or not query.strip():
+        return []
+
+    collection = get_collection(collection_name)
+
+    if rag_source_type == "CERTIFICATE":
+        where = _certificate_name_filter(rag_keywords)
+        if where:
+            chunks = _query(collection, query, top_k, where=where)
+            if chunks:  # 종목명으로 좁혀서 찾았으면 그대로 사용
+                return chunks
+            # 해당 종목에 유사한 청크가 없으면 필터 없이 폴백
+
+    return _query(collection, query, top_k)
 
 
 def format_rag_context(chunks: list[dict]) -> str:

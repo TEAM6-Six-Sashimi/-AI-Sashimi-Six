@@ -72,10 +72,13 @@ class ChatbotService:
             return None
         try:
             # chromadb 검색은 동기 함수라 이벤트 루프를 막지 않도록 스레드로 실행
+            # ragKeywords를 함께 넘겨, 자격증은 종목명으로 좁혀 검색되게 한다.
             chunks = await asyncio.to_thread(
                 retrieve,
                 classification.rag_source_type,
                 user_message,
+                3,
+                classification.rag_keywords,
             )
             if not chunks:
                 return None
