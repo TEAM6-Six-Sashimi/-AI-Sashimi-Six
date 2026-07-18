@@ -30,10 +30,10 @@ def calculate_repeated_expression_count(
         questions: list[CoverLetterQuestionReview],
 ) -> int:
     expressions = {
-        repeated.expression.strip()
+        repeated.strip()
         for question in questions
         for repeated in question.repeated_expressions
-        if repeated.expression.strip()
+        if repeated.strip()
     }
 
     return len(expressions)
