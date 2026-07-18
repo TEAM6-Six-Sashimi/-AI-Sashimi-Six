@@ -1,12 +1,12 @@
 from pathlib import Path
 
-_PROMPTS_DIR = Path(__file__).parent / "prompts"
+_REGULATIONS_DIR = Path(__file__).parent / "regulations"
 
 # 답변 생성 규정(V1) / 질문 분류 규정(V1)을 번들 파일에서 로드한다.
 # 규정 문서 안의 {{USER_MESSAGE}} 등 placeholder를 실제 값으로 치환해 프롬프트를 만든다.
-_ANSWER_REGULATION = (_PROMPTS_DIR / "answer_regulation.txt").read_text(encoding="utf-8")
+_ANSWER_REGULATION = (_REGULATIONS_DIR / "answer_regulation.txt").read_text(encoding="utf-8")
 _CLASSIFICATION_REGULATION = (
-    _PROMPTS_DIR / "classification_regulation.txt"
+    _REGULATIONS_DIR / "classification_regulation.txt"
 ).read_text(encoding="utf-8")
 
 _NOT_PROVIDED = "제공되지 않음"
