@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 
-from app.features.chatbot.schemas import ChatMessageRequest, ChatReplyResponse
+from app.features.chatbot.schemas import ChatRequest, ChatResponse
 from app.features.chatbot.service import ChatbotService
 
 router = APIRouter(
@@ -13,10 +13,10 @@ chatbot_service = ChatbotService()
 
 @router.post(
     "/messages",
-    response_model=ChatReplyResponse,
+    response_model=ChatResponse,
     response_model_by_alias=True,
 )
-async def send_message(
-        request: ChatMessageRequest,
+async def chat(
+        request: ChatRequest,
 ):
-    return await chatbot_service.send_message(request)
+    return await chatbot_service.chat(request)
