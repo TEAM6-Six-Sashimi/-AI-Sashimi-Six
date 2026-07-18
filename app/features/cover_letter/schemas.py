@@ -15,7 +15,7 @@ class CoverLetterQuestionRequest(BaseModel):
 
     question_key: str = Field(..., alias="questionKey")
     question_title: str = Field(..., alias="questionTitle")
-    content: str = Field(..., min_length=10)
+    content: str = Field(..., min_length=1)
 
 
 class CoverLetterReviewRequest(BaseModel):
@@ -23,7 +23,10 @@ class CoverLetterReviewRequest(BaseModel):
 
     questions: list[CoverLetterQuestionRequest] = Field(..., min_length=1)
     resume_summary: str | None = Field(default=None, alias="resumeSummary")
-    job_posting_summary: str | None = Field(default=None, alias="jobPostingSummary")
+    job_posting_summary: str | None = Field(
+        default=None,
+        alias="jobPostingSummary",
+    )
 
 
 class SpellingCorrection(BaseModel):
@@ -31,13 +34,6 @@ class SpellingCorrection(BaseModel):
 
     original: str
     corrected: str
-
-
-class RepeatedExpression(BaseModel):
-    model_config = ConfigDict(populate_by_name=True)
-
-    expression: str
-    count: int = Field(..., ge=2)
 
 
 class CoverLetterQuestionReview(BaseModel):
@@ -50,9 +46,9 @@ class CoverLetterQuestionReview(BaseModel):
         default_factory=list,
         alias="spellingCorrections",
     )
-    repeated_expressions: list[RepeatedExpression] = Field(
-        default_factory=list,
-        alias="repeatedExpressions",
+    repeated_expressions: list[str] = Field(
+    default_factory=list,
+    alias="repeatedExpressions",
     )
     expression_improvement_count: int = Field(
         ...,
@@ -65,7 +61,10 @@ class CoverLetterQuestionReview(BaseModel):
         alias="flowImprovementCount",
     )
     feedback: str
-    improved_example: str | None = Field(default=None, alias="improvedExample")
+    improved_example: str | None = Field(
+        default=None,
+        alias="improvedExample",
+    )
 
 
 class CoverLetterReviewResponse(BaseModel):
