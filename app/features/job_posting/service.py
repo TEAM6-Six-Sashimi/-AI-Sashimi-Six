@@ -32,7 +32,8 @@ class JobPostingService:
             json_text = remove_markdown_fence(generated_text)
             data = json.loads(json_text)
 
-            data["courses"] = []
+            data.setdefault("certificates", [])
+            data.setdefault("courseSearchCriteria", [])
 
             return JobPostingAnalyzeResponse.model_validate(data)
         except Exception as exception:
