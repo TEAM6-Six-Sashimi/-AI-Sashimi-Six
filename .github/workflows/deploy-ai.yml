@@ -64,7 +64,11 @@ jobs:
           IMAGE_SHA: ${{ github.sha }}
         run: |
           SHORT_SHA=$(echo "$IMAGE_SHA" | cut -c1-7)
-          ssh -i ~/.ssh/ai-sashimi-ec2.pem "$AI_EC2_USER@$AI_EC2_HOST" \
+          ssh -i ~/.ssh/ai-sashimi-ec2.pem \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=10 \
+            -o TCPKeepAlive=yes \
+            "$AI_EC2_USER@$AI_EC2_HOST" \
             "APP_DIR='$EC2_APP_DIR' ENV_FILE='$EC2_ENV_FILE' DOCKER_IMAGE_REPO='$DOCKER_IMAGE_REPO' IMAGE_TAG='$SHORT_SHA' DOCKER_CONTAINER='$DOCKER_CONTAINER' APP_PORT='$APP_PORT' DEPLOY_BRANCH='$DEPLOY_BRANCH' IMAGE_KEEP_COUNT='$IMAGE_KEEP_COUNT' bash -s" <<'REMOTE'
           set -euo pipefail
 
@@ -92,6 +96,8 @@ jobs:
             --name "$DOCKER_CONTAINER" \
             --restart unless-stopped \
             --env-file "$ENV_FILE" \
+            --memory="600m" \
+            --memory-swap="800m" \
             -p "$APP_PORT:$APP_PORT" \
             -e "PORT=$APP_PORT" \
             "$IMAGE_LATEST"
