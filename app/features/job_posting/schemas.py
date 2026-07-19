@@ -10,6 +10,11 @@ FitStatus = Literal[
     "UNKNOWN",
 ]
 
+CourseRecommendationType = Literal[
+    "CERTIFICATE",
+    "JOB_POSTING",
+]
+
 
 class JobPostingAnalyzeRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
@@ -75,6 +80,21 @@ class CertificateRecommendationResponse(BaseModel):
     difficulty: str | None = None
 
 
+class CourseSearchCriterionResponse(BaseModel):
+    model_config = ConfigDict(populate_by_name=True)
+
+    recommendation_type: CourseRecommendationType = Field(
+        ...,
+        alias="recommendationType",
+    )
+    keyword: str
+    reason: str
+    related_skills: list[str] = Field(
+        default_factory=list,
+        alias="relatedSkills",
+    )
+
+
 class JobPostingAnalyzeResponse(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
@@ -86,4 +106,7 @@ class JobPostingAnalyzeResponse(BaseModel):
     certificates: list[CertificateRecommendationResponse] = Field(
         default_factory=list,
     )
-    courses: list = Field(default_factory=list)
+    course_search_criteria: list[CourseSearchCriterionResponse] = Field(
+        default_factory=list,
+        alias="courseSearchCriteria",
+    )
