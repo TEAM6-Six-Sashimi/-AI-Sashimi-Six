@@ -44,6 +44,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # 기본 docker 드라이버는 cache-to(type=gha) export를 지원 안 함.
+      # docker-container 드라이버로 바꿔야 캐시 export가 됨.
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       # GH Actions 러너에서 빌드 (EC2는 더 이상 빌드 안 함 - 디스크/CPU 부담 제거)
       # cache-from/to type=gha: 러너의 빌드 캐시를 GitHub Actions 캐시에 저장,
       # requirements.txt/모델이 안 바뀌면 다음 빌드부터 재사용됨
