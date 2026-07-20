@@ -44,7 +44,7 @@ jobs:
       DOCKER_CONTAINER: ai-sashimi
       APP_PORT: 8001
       DEPLOY_BRANCH: ${{ github.ref_name }}
-      IMAGE_KEEP_COUNT: 5
+      IMAGE_KEEP_COUNT: 2
 
     steps:
       - name: Configure SSH key
