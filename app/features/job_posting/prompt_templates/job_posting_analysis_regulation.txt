@@ -193,7 +193,9 @@ certificates에는 채용공고의 직무, 주요 업무, 필수 역량 또는 �
 [7. 강의 추천 기준]
 ============================================================
 
-courses는 Spring이 실제 LMS 강의를 검색하고 매칭하기 위한 추천 기준이다.
+courseSearchCriteria는 Spring이 LMS DB에서 실제 강의를 검색하기 위한 검색 기준이다.
+Gemini는 실제 LMS 강의명을 생성하지 않는다.
+Spring은 courseSearchCriteria를 사용하여 최종 REST 응답의 recommendedCourses를 생성한다.
 
 Gemini는 LMS에 실제 존재하는 강의명을 추측하거나 생성하지 않는다.
 
@@ -210,9 +212,9 @@ Gemini는 LMS에 실제 존재하는 강의명을 추측하거나 생성하지 �
    필수 역량 또는 우대 역량을 기반으로 강의 검색 기준을 반환한다.
 4. 공고에서 확인할 수 없는 기술이나 역량을 임의로 추가하지 않는다.
 5. 동일하거나 지나치게 유사한 강의 기준을 중복해서 반환하지 않는다.
-6. 추천 근거가 부족하면 courses는 빈 배열을 반환한다.
+6. 추천 근거가 부족하면 courseSearchCriteria는 빈 배열을 반환한다.
 
-각 course 객체는 다음 key를 사용한다.
+각 courseSearchCriteria 객체는 다음 key를 사용한다.
 
 - recommendationType
 - keyword
@@ -238,7 +240,7 @@ recommendationType은 다음 두 값 중 하나만 사용한다.
 - reason에는 해당 강의 분야가 필요한 이유를 공고 내용에 근거해 작성한다.
 - relatedSkills에는 주요 업무 또는 자격요건에서 추출한 관련 역량을 작성한다.
 
-courses는 실제 강의 조회 결과가 아니다.
+courseSearchCriteria는 실제 강의 조회 결과가 아니다.
 Spring은 keyword와 relatedSkills를 사용하여 LMS DB의 실제 강의를 매칭한다.
 
 
@@ -306,7 +308,7 @@ Spring은 keyword와 relatedSkills를 사용하여 LMS DB의 실제 강의를 �
       "difficulty": ""
     }
   ],
-  "courses": [
+    "courseSearchCriteria": [
     {
       "recommendationType": "CERTIFICATE",
       "keyword": "",
@@ -363,8 +365,9 @@ RESUME_BASED가 true인 경우 fitAnalysis는 다음 구조를 사용한다.
 11. LMS의 실제 강의명을 임의로 생성하지 않았는가?
 12. 자격증이 있다면 자격증 기반 강의 기준을 우선했는가?
 13. 자격증이 없다면 채용공고 기반 강의 기준을 사용했는가?
-14. courses가 규정된 객체 구조를 따르는가?
-15. JSON이 { 로 시작하고 } 로 끝나는가?
+14. courseSearchCriteria가 규정된 객체 구조를 따르는가?
+15. recommendationType이 CERTIFICATE 또는 JOB_POSTING인가?
+16. JSON이 { 로 시작하고 } 로 끝나는가?
 
 위 규정을 모두 준수하여 지금 입력된 채용공고를 분석한다.
 

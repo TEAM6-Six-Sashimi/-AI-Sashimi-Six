@@ -28,7 +28,9 @@ _CLOSING_TEMPLATE = """
 - 응답 key는 반드시 camelCase를 사용한다.
 - 공고에 명시되지 않은 조건은 추론하지 않는다.
 - 이력서 정보가 제공되지 않은 경우 fitAnalysis는 null로 반환한다.
-- courses는 항상 빈 배열로 반환한다.
+- 실제 LMS 강의명, courseId, 강사명, 썸네일, 가격, 평점은 생성하지 않는다.
+- Spring이 LMS DB에서 강의를 검색할 수 있도록 courseSearchCriteria를 반환한다.
+- courseSearchCriteria의 recommendationType은 CERTIFICATE 또는 JOB_POSTING만 사용한다.
 
 [채용공고 본문]
 {content}
