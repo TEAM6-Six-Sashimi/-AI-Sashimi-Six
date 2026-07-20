@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM python:3.12-slim
 
 WORKDIR /app
@@ -5,12 +6,18 @@ WORKDIR /app
 RUN addgroup --system app && adduser --system --ingroup app app
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pip install -r requirements.txt
 
 # 임베딩 모델을 이미지에 미리 받아둔다.
 # 런타임에 받으면 첫 요청이 수십 초 걸리고, USER app 권한으로는 캐시 쓰기가 막힌다.
+# 다운로드 자체는 캐시 마운트(재빌드 시 재사용)로 받고, 최종 이미지에 들어가야 하는
+# 결과물만 /app/.cache/huggingface로 복사한다 (캐시 마운트는 이미지 레이어에 안 남음).
 ENV HF_HOME=/app/.cache/huggingface
-RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('jhgan/ko-sroberta-multitask')"
+RUN --mount=type=cache,target=/root/.cache/huggingface-dl \
+    HF_HOME=/root/.cache/huggingface-dl python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('jhgan/ko-sroberta-multitask')" \
+    && mkdir -p /app/.cache/huggingface \
+    && cp -r /root/.cache/huggingface-dl/. /app/.cache/huggingface/
 
 # RAG 색인 단계.
 # ingest.py가 필요로 하는 건 rag.py 하나뿐이라 먼저 복사한다.
