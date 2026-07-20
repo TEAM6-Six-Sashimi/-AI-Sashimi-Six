@@ -90,7 +90,9 @@ jobs:
           IMAGE_VERSIONED="$DOCKER_IMAGE_REPO:$IMAGE_TAG"
 
           # latest + 커밋 SHA 태그를 같이 붙여서 빌드 (롤백용 버전 보존)
-          sudo docker build -t "$IMAGE_LATEST" -t "$IMAGE_VERSIONED" .
+          # DOCKER_BUILDKIT=1: Dockerfile의 --mount=type=cache로 pip/모델 다운로드
+          # 캐시를 재사용하기 위해 필요 (없으면 매 배포마다 전부 새로 받음)
+          sudo DOCKER_BUILDKIT=1 docker build -t "$IMAGE_LATEST" -t "$IMAGE_VERSIONED" .
           sudo docker rm -f "$DOCKER_CONTAINER" >/dev/null 2>&1 || true
           sudo docker run -d \
             --name "$DOCKER_CONTAINER" \
