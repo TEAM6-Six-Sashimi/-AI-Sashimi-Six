@@ -90,6 +90,17 @@ def _certificate_names() -> frozenset[str]:
     )
 
 
+def warmup() -> None:
+    """임베딩 모델과 컬렉션을 미리 메모리에 올린다.
+
+    모델(약 440MB) 로딩이 첫 요청 때 일어나면 30초를 넘겨 Spring 타임아웃에 걸린다.
+    서버 기동 직후 미리 불러두면 첫 사용자도 정상 응답을 받는다.
+    """
+    for collection_name in COLLECTION_BY_SOURCE.values():
+        get_collection(collection_name)
+    _certificate_names()
+
+
 def retrieve(
         rag_source_type: str,
         query: str,
