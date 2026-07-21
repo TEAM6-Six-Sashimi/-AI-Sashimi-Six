@@ -121,8 +121,8 @@ jobs:
             --name "$DOCKER_CONTAINER" \
             --restart unless-stopped \
             --env-file "$ENV_FILE" \
-            --memory="600m" \
-            --memory-swap="800m" \
+            --memory="1100m" \
+            --memory-swap="1400m" \
             -p "$APP_PORT:$APP_PORT" \
             -e "PORT=$APP_PORT" \
             "$IMAGE_REF"
