@@ -46,6 +46,11 @@ class CoverLetterService:
                 for question in data["questions"]
             ]
 
+            self._validate_question_keys(
+                request,
+                question_reviews,
+            )
+
             return CoverLetterReviewResponse(
                 overall_comment=data["overallComment"],
                 repeated_expression_count=calculate_repeated_expression_count(
@@ -58,3 +63,22 @@ class CoverLetterService:
             )
         except Exception as exception:
             raise AiResponseParseException() from exception
+
+    def _validate_question_keys(
+            self,
+            request: CoverLetterReviewRequest,
+            question_reviews: list[CoverLetterQuestionReview],
+    ) -> None:
+        requested_keys = [
+            question.question_key
+            for question in request.questions
+            if question.content and question.content.strip()
+        ]
+
+        response_keys = [
+            question.question_key
+            for question in question_reviews
+        ]
+
+        if response_keys != requested_keys:
+            raise AiResponseParseException()
