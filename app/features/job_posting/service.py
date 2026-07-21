@@ -35,6 +35,18 @@ class JobPostingService:
             data.setdefault("certificates", [])
             data.setdefault("courseSearchCriteria", [])
 
+            criteria = data["courseSearchCriteria"]
+
+            if not isinstance(criteria, list):
+                raise ValueError("courseSearchCriteria must be a list")
+
+            data["courseSearchCriteria"] = [
+                criterion
+                for criterion in criteria
+                if isinstance(criterion, dict)
+                and criterion.get("recommendationType") == "CERTIFICATE"
+            ]
+
             return JobPostingAnalyzeResponse.model_validate(data)
         except Exception as exception:
             raise AiResponseParseException() from exception

@@ -8,6 +8,7 @@ from fastapi.responses import JSONResponse
 from app.api.router import api_router
 from app.core.exceptions import AiServerException
 from app.health.router import router as health_router
+from app.shared.clients.gemini_client import GeminiClient
 
 # uvicorn이 설정해 둔 로거를 쓴다(앱 자체 로거는 기본 설정에서 출력되지 않는다).
 logger = logging.getLogger("uvicorn.error")
@@ -34,7 +35,11 @@ async def lifespan(app: FastAPI):
     # 모델 로딩은 수십 초가 걸리므로 백그라운드로 돌린다.
     # 기동을 막으면 배포 헬스체크(150초 제한)가 지연될 수 있다.
     threading.Thread(target=_warmup_chatbot_rag, daemon=True).start()
-    yield
+
+    try:
+        yield
+    finally:
+        await GeminiClient.close()
 
 
 def create_app() -> FastAPI:

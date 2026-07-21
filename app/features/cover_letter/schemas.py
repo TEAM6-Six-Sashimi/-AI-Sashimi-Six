@@ -47,8 +47,8 @@ class CoverLetterQuestionReview(BaseModel):
         alias="spellingCorrections",
     )
     repeated_expressions: list[str] = Field(
-    default_factory=list,
-    alias="repeatedExpressions",
+        default_factory=list,
+        alias="repeatedExpressions",
     )
     expression_improvement_count: int = Field(
         ...,
