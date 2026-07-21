@@ -37,6 +37,11 @@ COPY app ./app
 RUN chown -R app:app /app/chroma_db /app/.cache
 
 ENV PORT=8001
+# 워커 1개로는 챗봇 RAG 검색(CPU 바운드) 중에 이벤트루프가 막혀 동시 요청이
+# 직렬화됨(k6 부하테스트로 확인, 20명 동시 챗봇 요청 시 응답시간 최대 27초).
+# 워커 늘리면 그만큼 임베딩 모델이 프로세스마다 따로 로드되어 메모리도 배로
+# 늘어나니, 컨테이너 --memory 캡을 워커 수에 맞춰 같이 올려야 함(deploy-ai.yml 참고).
+ENV WORKERS=2
 
 EXPOSE 8001
 
@@ -45,4 +50,4 @@ USER app
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8001/health', timeout=3).status == 200 else 1)"
 
-ENTRYPOINT ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
+ENTRYPOINT ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS}"]
