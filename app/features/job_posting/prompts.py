@@ -30,7 +30,9 @@ _CLOSING_TEMPLATE = """
 - 이력서 정보가 제공되지 않은 경우 fitAnalysis는 null로 반환한다.
 - 실제 LMS 강의명, courseId, 강사명, 썸네일, 가격, 평점은 생성하지 않는다.
 - Spring이 LMS DB에서 강의를 검색할 수 있도록 courseSearchCriteria를 반환한다.
-- courseSearchCriteria의 recommendationType은 CERTIFICATE 또는 JOB_POSTING만 사용한다.
+- recommendationType은 반드시 CERTIFICATE만 사용한다.
+- JOB_POSTING은 사용하지 않는다.
+- 추천 가능한 자격증이 없으면 courseSearchCriteria는 빈 배열로 반환한다.
 
 [채용공고 본문]
 {content}

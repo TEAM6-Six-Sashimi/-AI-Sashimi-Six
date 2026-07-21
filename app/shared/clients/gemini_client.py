@@ -41,7 +41,7 @@ class GeminiClient:
         }
 
         try:
-            client = self._get_client(
+            client = await self._get_client(
                 settings.gemini_timeout_seconds
             )
 
@@ -55,9 +55,9 @@ class GeminiClient:
 
             if response.status_code >= 400:
                 logger.warning(
-                    "Gemini API error status=%s body=%s",
+                    "Gemini API error status=%s bodySnippet=%s",
                     response.status_code,
-                    response.text,
+                    self._truncate(response.text),
                 )
                 raise GeminiApiException()
 
@@ -80,8 +80,8 @@ class GeminiClient:
 
         if not isinstance(candidates, list) or not candidates:
             logger.warning(
-                "Gemini API response has no candidates: body=%s",
-                response_body,
+                "Gemini API response has no candidates: keys=%s",
+                list(response_body.keys()),
             )
             raise GeminiApiException()
 
@@ -89,8 +89,8 @@ class GeminiClient:
 
         if not isinstance(first_candidate, dict):
             logger.warning(
-                "Gemini API candidate is invalid: candidate=%s",
-                first_candidate,
+                "Gemini API candidate is invalid: type=%s",
+                type(first_candidate).__name__,
             )
             raise GeminiApiException()
 
@@ -98,8 +98,8 @@ class GeminiClient:
 
         if not isinstance(content, dict):
             logger.warning(
-                "Gemini API response has no content: candidate=%s",
-                first_candidate,
+                "Gemini API response has no content: candidateKeys=%s",
+                list(first_candidate.keys()),
             )
             raise GeminiApiException()
 
@@ -107,8 +107,8 @@ class GeminiClient:
 
         if not isinstance(parts, list) or not parts:
             logger.warning(
-                "Gemini API response has no parts: content=%s",
-                content,
+                "Gemini API response has no parts: contentKeys=%s",
+                list(content.keys()),
             )
             raise GeminiApiException()
 
@@ -122,15 +122,25 @@ class GeminiClient:
 
         if not texts:
             logger.warning(
-                "Gemini API response has no text parts: parts=%s",
-                parts,
+                "Gemini API response has no text parts: partsCount=%s",
+                len(parts),
             )
             raise GeminiApiException()
 
         return "".join(texts).strip()
 
+    def _truncate(
+            self,
+            value: str,
+            limit: int = 200,
+    ) -> str:
+        if len(value) <= limit:
+            return value
+
+        return value[:limit] + "...(truncated)"
+
     @classmethod
-    def _get_client(
+    async def _get_client(
             cls,
             timeout_seconds: int,
     ) -> httpx.AsyncClient:
@@ -139,6 +149,9 @@ class GeminiClient:
                 or cls._client.is_closed
                 or cls._timeout_seconds != timeout_seconds
         ):
+            if cls._client is not None and not cls._client.is_closed:
+                await cls._client.aclose()
+
             cls._client = httpx.AsyncClient(
                 timeout=timeout_seconds
             )
