@@ -12,7 +12,6 @@ FitStatus = Literal[
 
 CourseRecommendationType = Literal[
     "CERTIFICATE",
-    "JOB_POSTING",
 ]
 
 
