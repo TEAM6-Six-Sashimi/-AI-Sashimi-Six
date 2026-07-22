@@ -72,7 +72,7 @@ def _certificate_name_filter(rag_keywords: list[str] | None) -> dict | None:
     if not rag_keywords:
         return None
 
-    known_names = _certificate_names()
+    known_names = certificate_names()
     for keyword in rag_keywords:
         name = keyword.strip()
         if name in known_names:
@@ -81,7 +81,7 @@ def _certificate_name_filter(rag_keywords: list[str] | None) -> dict | None:
 
 
 @lru_cache(maxsize=1)
-def _certificate_names() -> frozenset[str]:
+def certificate_names() -> frozenset[str]:
     """색인된 자격증 종목명 집합 (필터 키워드가 실제 종목명인지 확인용)."""
     collection = get_collection(COLLECTION_BY_SOURCE["CERTIFICATE"])
     metadatas = collection.get(include=["metadatas"])["metadatas"]
@@ -98,7 +98,12 @@ def warmup() -> None:
     """
     for collection_name in COLLECTION_BY_SOURCE.values():
         get_collection(collection_name)
-    _certificate_names()
+    certificate_names()
+
+    # 의도 분류 컬렉션도 함께 올린다(첫 질문부터 임베딩 분류가 동작하도록).
+    from app.features.chatbot.intent_classifier import INTENTS_COLLECTION
+
+    get_collection(INTENTS_COLLECTION)
 
 
 def retrieve(
