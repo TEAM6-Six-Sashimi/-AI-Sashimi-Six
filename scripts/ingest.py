@@ -14,8 +14,7 @@ from pypdf import PdfReader
 # app 패키지 import를 위해 루트 경로 추가
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from app.features.chatbot.intent_classifier import INTENTS_COLLECTION  # noqa: E402
-from app.features.chatbot.rag import DATA_DIR, get_collection  # noqa: E402
+from app.features.chatbot.rag import DATA_DIR, INTENTS_COLLECTION, get_collection  # noqa: E402
 
 CHUNK_SIZE = 500
 CHUNK_OVERLAP = 50
