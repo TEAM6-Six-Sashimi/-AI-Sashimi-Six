@@ -25,6 +25,9 @@ COLLECTION_BY_SOURCE = {
     # "COURSE": 강의 데이터 없음(추천 미지원) → 검색 안 함
 }
 
+# 의도 분류용 예시 질문 컬렉션. 색인(ingest)과 분류(intent_classifier)가 함께 쓴다.
+INTENTS_COLLECTION = "intents"
+
 
 @lru_cache(maxsize=1)
 def _client() -> chromadb.ClientAPI:
@@ -101,8 +104,6 @@ def warmup() -> None:
     certificate_names()
 
     # 의도 분류 컬렉션도 함께 올린다(첫 질문부터 임베딩 분류가 동작하도록).
-    from app.features.chatbot.intent_classifier import INTENTS_COLLECTION
-
     get_collection(INTENTS_COLLECTION)
 
 

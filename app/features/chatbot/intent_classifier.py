@@ -9,12 +9,10 @@
 import logging
 from functools import lru_cache
 
-from app.features.chatbot.rag import certificate_names, get_collection
+from app.features.chatbot.rag import INTENTS_COLLECTION, certificate_names, get_collection
 from app.features.chatbot.schemas import Classification
 
 logger = logging.getLogger("uvicorn.error")
-
-INTENTS_COLLECTION = "intents"
 
 # 이 값 미만이면 확신이 없다고 보고 LLM 분류로 넘긴다.
 # 측정 결과 0.55에서 약 90%가 임베딩으로 처리되고 그중 정확도 약 88%였다.
