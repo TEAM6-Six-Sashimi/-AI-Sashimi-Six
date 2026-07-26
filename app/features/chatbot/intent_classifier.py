@@ -6,8 +6,11 @@
 
 임베딩 모델은 rag 모듈의 것을 그대로 쓴다(약 440MB를 두 번 올리지 않기 위함).
 """
+import csv
 import logging
+from datetime import datetime, timezone
 from functools import lru_cache
+from pathlib import Path
 
 from app.features.chatbot.rag import INTENTS_COLLECTION, certificate_names, get_collection
 from app.features.chatbot.schemas import Classification
@@ -17,6 +20,35 @@ logger = logging.getLogger("uvicorn.error")
 # 이 값 미만이면 확신이 없다고 보고 LLM 분류로 넘긴다.
 # 측정 결과 0.55에서 약 90%가 임베딩으로 처리되고 그중 정확도 약 88%였다.
 SIMILARITY_THRESHOLD = 0.55
+
+# 확신도 낮은 질문(= 색인된 예시에 없던 새 표현)을 모아, 나중에 intents.csv 보강에 활용한다.
+# 임베딩 분류의 약점(새 표현에 취약)을 스스로 기록해 지속적으로 개선하기 위한 장치.
+# 운영에선 로그(→ 로그 수집기)가 durable 채널이고, 파일은 로컬 분석용이다.
+_FEEDBACK_LOG = Path(__file__).resolve().parents[3] / "logs" / "low_confidence_questions.csv"
+
+
+def _record_low_confidence(user_message: str, similarity: float, nearest_label: str) -> None:
+    """임베딩 분류가 확신하지 못한 질문을 개선 후보로 기록한다.
+
+    로그와 파일 양쪽에 남긴다. 파일 쓰기는 실패해도 요청 처리에 영향을 주지 않는다.
+    """
+    logger.info(
+        "[Chatbot] 개선 후보 수집(확신 부족) - question=%r similarity=%.3f nearest=%s",
+        user_message, similarity, nearest_label,
+    )
+    try:
+        _FEEDBACK_LOG.parent.mkdir(parents=True, exist_ok=True)
+        is_new = not _FEEDBACK_LOG.exists()
+        with open(_FEEDBACK_LOG, "a", encoding="utf-8-sig", newline="") as f:
+            writer = csv.writer(f)
+            if is_new:
+                writer.writerow(["수집시각(UTC)", "질문", "유사도", "최근접_라벨"])
+            writer.writerow([
+                datetime.now(timezone.utc).isoformat(timespec="seconds"),
+                user_message, f"{similarity:.4f}", nearest_label,
+            ])
+    except Exception as exception:
+        logger.warning("[Chatbot] 개선 후보 파일 기록 실패(로그만 유지): %r", exception)
 
 # 의도 라벨 → (RAG 사용 여부, 검색할 자료). 라벨은 data/intents.csv 기준.
 _FITGYEOK_LABELS = frozenset({
@@ -70,7 +102,8 @@ def classify(user_message: str) -> Classification | None:
     label = metadata.get("label", "UNKNOWN")
 
     if similarity < SIMILARITY_THRESHOLD:
-        logger.info("[Chatbot] 임베딩 분류 확신 부족(%.3f) → LLM 분류", similarity)
+        # 확신이 낮은 질문은 개선 후보로 수집한 뒤, 기존대로 LLM 분류로 넘긴다(안전장치 유지).
+        _record_low_confidence(user_message, similarity, label)
         return None
 
     needs_rag, rag_source_type = _routing(label)
